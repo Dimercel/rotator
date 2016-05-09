@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 sbcl --no-userinit --no-sysinit --non-interactive \
      --load ~/quicklisp/setup.lisp \
@@ -8,3 +8,5 @@ sbcl --no-userinit --no-sysinit --non-interactive \
 buildapp --manifest-file rotator-manifest.txt --load-system rotator \
          --output rotator-exe \
          --entry rotator:main
+
+rm rotator-manifest.txt
