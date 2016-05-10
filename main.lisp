@@ -1,7 +1,8 @@
 (defpackage :rotator
   (:export :main
            :config-dir
-           :rules-config-exist?
+           :defcondition
+           :rules-config-exists?
            :file-size
            :size-from-text
            :size-suffix-to-number
@@ -10,6 +11,11 @@
   (:import-from :cl-ppcre :scan))
 
 (in-package :rotator)
+
+(defun file-exists? (path)
+  (if (probe-file path)
+      t
+      nil))
 
 (defun config-dir ()
   "Возвращает путь конфигурационной директории"
@@ -23,12 +29,9 @@
    указаны параметры ротации"
   (merge-pathnames (config-dir) #p"config.xml"))
 
-(defun rules-config-exist? ()
+(defun rules-config-exists? ()
   "Проверка на существование файла-конфига"
-  (let ((exist (probe-file (rules-config-path))))
-    (if exist
-        T
-        nil)))
+  (file-exists? (rules-config-path)))
 
 (defun file-size (limit value)
   "Предикат осуществляет проверку переданного значения на условие
@@ -45,14 +48,16 @@
           (t (= value (size-from-text limit))))
         nil)))
 
-(defun size-from-text (text)
+(defun size-from-text (text &optional (bad-result nil))
   "Конвертирует размер указанный в текстовом виде
    в числовое представление. Единица измерения - байт"
   (if (= (length text) 0)
       0
       (multiple-value-bind (number pos-inx)
           (parse-integer text :junk-allowed t)
-        (* number (size-suffix-to-number (subseq text pos-inx))))))
+        (if (null number)
+            bad-result
+            (* number (size-suffix-to-number (subseq text pos-inx)))))))
 
 (defun size-suffix-to-number (suffix)
   "Возвращает множитель единицы измерения,
@@ -61,6 +66,12 @@
         ((equal suffix "MB") 1048576)
         ((equal suffix "TB") 10737741824)
         (t 1)))
+
+(defmacro defcondition (name &body form)
+  `(defun ,name (path param)
+     (if (file-exists? path)
+         ,@form
+         nil)))
 
 (defun main (argv)
   (print "It's work"))
