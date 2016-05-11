@@ -6,8 +6,10 @@
            :file-size
            :size-from-text
            :size-suffix-to-number
+           :config-root-element
+           :monitored-directories
            :rules-config-path)
-  (:use :common-lisp :cxml)
+  (:use :common-lisp :cxml :xpath)
   (:import-from :cl-ppcre :scan))
 
 (in-package :rotator)
@@ -72,6 +74,17 @@
      (if (file-exists? path)
          ,@form
          nil)))
+
+(defun config-root-element (path)
+  "Возвращает корневой узел xml-конфига"
+  (dom:document-element 
+   (cxml:parse-file path
+                    (cxml-dom:make-dom-builder))))
+
+(defun monitored-directories (document)
+  "Получить ноды всех отслеживаемых директорий,
+   указанных в xml-конфиге"
+  (xpath:evaluate "//directory" document))
 
 (defun main (argv)
   (print "It's work"))
