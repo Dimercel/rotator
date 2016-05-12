@@ -7,6 +7,7 @@ sbcl --no-userinit --no-sysinit --non-interactive \
 
 buildapp --manifest-file rotator-manifest.txt --load-system rotator \
          --output rotator-exe \
+         --compress-core \
          --entry rotator:main
 
 rm rotator-manifest.txt
