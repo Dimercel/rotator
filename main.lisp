@@ -8,6 +8,7 @@
            :size-suffix-to-number
            :config-root-element
            :monitored-directories
+           :rotator-info
            :rules-config-path)
   (:use :common-lisp :cxml :xpath)
   (:import-from :cl-ppcre :scan))
@@ -18,6 +19,13 @@
   (if (probe-file path)
       t
       nil))
+
+(defun xpath-attr-val (attr-name node)
+  "Возвращает значение атрибута указанного xml узла"
+  (xpath:string-value
+   (xpath:evaluate
+    (concatenate 'string "@" attr-name)
+    node)))
 
 (defun config-dir ()
   "Возвращает путь конфигурационной директории"
@@ -85,6 +93,19 @@
   "Получить ноды всех отслеживаемых директорий,
    указанных в xml-конфиге"
   (xpath:evaluate "//directory" document))
+
+(defun rotator-info (dir-elem)
+  "Возвращает хэш с информацией о ротаторе, вытащенной
+   из xml-конфига"
+  (let ((result (make-hash-table)))
+    (setf (gethash "name" result)
+          (xpath:string-value (xpath:evaluate "//rotator/@name" dir-elem)))
+    (xpath:map-node-set
+     (lambda (x) (setf
+                  (gethash (xpath-attr-val "name" x) result)
+                  (xpath:string-value x)))
+     (xpath:evaluate "//rotator/param" dir-elem))
+    result))
 
 (defun main (argv)
   (print "It's work"))
