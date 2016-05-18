@@ -15,7 +15,7 @@
   "Предикат осуществляет проверку переданного значения на условие
    соответствия лимиту. Лимит задается в текстовой форме.
    Пример: '<10MB', '>10KB'"
-  (let ((expr (scan "(<|>)?\\d+(KB|MB|TB|B)?" limit))
+  (let ((expr (scan "(<|>)?\\d+(KB|MB|GB|B)?" limit))
         (first-sym (char limit 0)))
     (if expr
         (cond
@@ -43,7 +43,7 @@
   (cond ((equal suffix "B") 1)
         ((equal suffix "KB") 1024)
         ((equal suffix "MB") 1048576)
-        ((equal suffix "TB") 10737741824)
+        ((equal suffix "GB") 10737741824)
         (t 1)))
 
 (defmacro defcondition (name params &body form)
