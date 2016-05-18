@@ -3,5 +3,6 @@
   :version "0.1"
   :author "Ito Dimercel <xolcman@gmail.com>"
   :licence "MIT"
-  :depends-on ("cxml" "xpath" "cl-ppcre")
-  :components ((:file "main")))
+  :depends-on ("cxml" "xpath" "cl-ppcre" "cl-fad")
+  :components ((:file "condition")
+               (:file "main")))
