@@ -1,5 +1,6 @@
 (defpackage :rotator.condition
-  (:export :file-size-limit)
+  (:export :file-size-more
+           :file-size-less)
   (:use :common-lisp :cl-fad)
   (:import-from :cl-fad :file-exists-p)
   (:import-from :cl-ppcre :scan))
@@ -10,21 +11,6 @@
   "Возвращает размер файла в байтах."
   (with-open-file (in path :element-type '(unsigned-byte 8))
     (file-length in)))
-
-(defun file-size-in-limit? (limit value)
-  "Предикат осуществляет проверку переданного значения на условие
-   соответствия лимиту. Лимит задается в текстовой форме.
-   Пример: '<10MB', '>10KB'"
-  (let ((expr (scan "(<|>)?\\d+(KB|MB|GB|B)?" limit))
-        (first-sym (char limit 0)))
-    (if expr
-        (cond
-          ((char= #\> first-sym)
-           (> value (size-from-text (subseq limit 1))))
-          ((char= #\< first-sym)
-           (< value (size-from-text (subseq limit 1))))
-          (t (= value (size-from-text limit))))
-        nil)))
 
 (defun size-from-text (text &optional (bad-result nil))
   "Конвертирует размер указанный в текстовом виде
@@ -52,7 +38,14 @@
          ,@form
          nil)))
 
-(defcondition file-size-limit (path limit)
-  (file-size-in-limit?
-   limit
-   (file-size (pathname path))))
+(defcondition file-size-more (path limit)
+  (let ((limit-value (size-from-text limit)))
+    (if limit-value
+        (> (file-size (pathname path)) limit-value)
+        nil)))
+
+(defcondition file-size-less (path limit)
+  (let ((limit-value (size-from-text limit)))
+    (if limit-value
+        (< (file-size (pathname path)) limit-value)
+        nil)))
