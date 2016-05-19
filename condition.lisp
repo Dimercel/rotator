@@ -40,12 +40,16 @@
 
 (defcondition file-size-more (path limit)
   (let ((limit-value (size-from-text limit)))
-    (if limit-value
+    (if (and
+         limit-value
+         (scan "\\d+(KB|MB|GB|B)?" limit))
         (> (file-size (pathname path)) limit-value)
         nil)))
 
 (defcondition file-size-less (path limit)
   (let ((limit-value (size-from-text limit)))
-    (if limit-value
+    (if (and
+         limit-value
+         (scan "\\d+(KB|MB|GB|B)?" limit))
         (< (file-size (pathname path)) limit-value)
         nil)))
