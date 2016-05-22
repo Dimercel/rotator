@@ -5,4 +5,5 @@
   :licence "MIT"
   :depends-on ("cxml" "xpath" "cl-ppcre" "cl-fad")
   :components ((:file "condition")
+               (:file "rotator")
                (:file "main")))

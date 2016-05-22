@@ -1,7 +1,7 @@
 (defpackage :rotator.condition
   (:export :file-size-more
            :file-size-less)
-  (:use :common-lisp :cl-fad)
+  (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
   (:import-from :cl-ppcre :scan))
 
