@@ -7,15 +7,11 @@
 
 
 (defclass rotator ()
-  ((log-path
-    :initarg :log-path
-    :initform "~/.rotator/rotate.log"
-    :reader log-path)
-   (params
+  ((params
     :initarg :params
     :initform '())))
 
-(defgeneric rotate (rotator path)
+(defgeneric rotate (rotator logger)
   (:documentation "Здесь происходит ротация файла,
    указанного в path"))
 
@@ -23,5 +19,5 @@
 (defclass remover (rotator)
   ())
 
-(defmethod rotate ((self rotator) path)
+(defmethod rotate ((self rotator) logger)
   (print "It's work!"))
