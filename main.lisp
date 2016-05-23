@@ -66,4 +66,5 @@
     result))
 
 (defun main (argv)
+  (declare (ignore argv))
   (print "It's work"))
