@@ -5,12 +5,20 @@
            :config-root-element
            :monitored-directories
            :rotator-info
+           :log-file-path
+           :init-logger
            :rules-config-path)
   (:use :common-lisp
         :cxml
         :xpath
         :rotator.condition)
   (:import-from :cl-fad :file-exists-p)
+  (:import-from :cl-log
+                :log-manager
+                :start-messenger
+                :text-file-messenger
+                :formatted-message
+                :log-message)
   (:import-from :cl-ppcre :scan))
 
 (in-package :rotator)
@@ -29,6 +37,16 @@
    (concatenate 'string
                 (directory-namestring (user-homedir-pathname))
                 ".rotator/")))
+
+(defun log-file-path ()
+  "Возвращает путь до главного лог-файла"
+  (merge-pathnames (config-dir) #p"rotator.log"))
+
+(defun init-logger (log-path)
+  (setf (log-manager)
+        (make-instance 'log-manager :message-class 'formatted-message))
+  (start-messenger 'text-file-messenger
+                   :filename log-path))
 
 (defun rules-config-path ()
   "Возвращает путь до xml-конфига, где
@@ -67,4 +85,5 @@
 
 (defun main (argv)
   (declare (ignore argv))
+  (log-message :info "xolcman")
   (print "It's work"))
