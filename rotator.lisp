@@ -24,8 +24,6 @@
   ())
 
 (defmethod rotate ((self rotator) path)
-  (if (file-exists-p path)
-      (progn
-        (delete-file (pathname path))
-        (log-message :info "[Rotator] Файл успешно удален."))
-      (log-message :warning "[Rotator] Файл не существует!")))
+  (if (delete-file (pathname path))
+      (log-message :info "[Rotator] Файл успешно удален."))
+      (log-message :warning "[Rotator] Файл не существует!"))
