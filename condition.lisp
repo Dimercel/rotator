@@ -1,9 +1,12 @@
 (defpackage :rotator.condition
   (:export :file-size-more
+           :file-name-match
            :file-size-less)
   (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
-  (:import-from :cl-ppcre :scan))
+  (:import-from :cl-ppcre
+                :regex-replace-all
+                :scan))
 
 (in-package :rotator.condition)
 
@@ -32,12 +35,25 @@
         ((equal suffix "GB") 10737741824)
         (t 1)))
 
+(defun re-begin-and-end-str (reg-exp)
+  "Добавляет спецификаторы начала и конца
+   строки в рег. выражение"
+  (concatenate 'string "^" reg-exp "$"))
+
+
+(defun name-pattern-to-re (expr)
+  (re-begin-and-end-str
+   (regex-replace-all "\\*"
+                      (regex-replace-all "\\." expr "\\.")
+                      ".*")))
+
 (defmacro defcondition (name params &body form)
   `(defun ,name ,params
      (if (file-exists-p ,(first params))
          ,@form
          nil)))
 
+;; Файл больше указанного размера?
 (defcondition file-size-more (path limit)
   (let ((limit-value (size-from-text limit)))
     (if (and
@@ -46,6 +62,7 @@
         (> (file-size (pathname path)) limit-value)
         nil)))
 
+;; Файл меньше указанного размера?
 (defcondition file-size-less (path limit)
   (let ((limit-value (size-from-text limit)))
     (if (and
@@ -53,3 +70,9 @@
          (scan "\\d+(KB|MB|GB|B)?" limit))
         (< (file-size (pathname path)) limit-value)
         nil)))
+
+;; Имя файла соответствует указанному шаблону?
+(defcondition file-name-match (path pattern)
+  (if (scan (name-pattern-to-re pattern) (file-namestring path))
+      t
+      nil))
