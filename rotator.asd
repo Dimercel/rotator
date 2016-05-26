@@ -8,6 +8,8 @@
                "cl-ppcre"
                "cl-fad"
                "cl-log")
-  :components ((:file "condition")
+  :components ((:file "utils")
+               (:file "config")
+               (:file "condition")
                (:file "rotator")
                (:file "main")))

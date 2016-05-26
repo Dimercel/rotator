@@ -6,9 +6,12 @@
   (:import-from :cl-fad :file-exists-p)
   (:import-from :cl-ppcre
                 :regex-replace-all
-                :scan))
+                :scan)
+  (:import-from :rotator.utils
+                :re-begin-and-end-str))
 
 (in-package :rotator.condition)
+
 
 (defun file-size (path)
   "Возвращает размер файла в байтах."
@@ -34,12 +37,6 @@
         ((equal suffix "MB") 1048576)
         ((equal suffix "GB") 10737741824)
         (t 1)))
-
-(defun re-begin-and-end-str (reg-exp)
-  "Добавляет спецификаторы начала и конца
-   строки в рег. выражение"
-  (concatenate 'string "^" reg-exp "$"))
-
 
 (defun name-pattern-to-re (expr)
   (re-begin-and-end-str
