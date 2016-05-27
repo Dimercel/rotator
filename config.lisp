@@ -30,7 +30,7 @@
 
 (defun config-root-element (path)
   "Возвращает корневой узел xml-конфига"
-  (dom:document-element 
+  (dom:document-element
    (cxml:parse-file path
                     (cxml-dom:make-dom-builder))))
 
@@ -39,15 +39,22 @@
    указанных в xml-конфиге"
   (xpath:evaluate "//directory" document))
 
-(defun rotator-info (dir-elem)
+(defun rotator-info (rot-node)
   "Возвращает хэш с информацией о ротаторе, вытащенной
    из xml-конфига"
   (let ((result (make-hash-table)))
-    (setf (gethash "name" result)
-          (xpath:string-value (xpath:evaluate "//rotator/@name" dir-elem)))
+    (setf (gethash "id" result)
+          (xpath:string-value (xpath-attr-val "id" rot-node)))
     (xpath:map-node-set
      (lambda (x) (setf
                   (gethash (xpath-attr-val "name" x) result)
                   (xpath:string-value x)))
-     (xpath:evaluate "//rotator/param" dir-elem))
+     (xpath:evaluate "//param" rot-node))
+    result))
+
+(defun condition-info (cond-node)
+  "Строит хэш на основании xml узла condition"
+  (let ((result (make-hash-table)))
+    (setf (gethash "type" result) (xpath-attr-val "type" cond-node))
+    (setf (gethash "value" result) (xpath:string-value cond-node))
     result))
