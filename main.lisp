@@ -10,14 +10,14 @@
                 :formatted-message
                 :log-message)
   (:import-from :rotator.config
-                :config-dir))
+                :config-dir-path))
 
 (in-package :rotator)
 
 
 (defun log-file-path ()
   "Возвращает путь до главного лог-файла"
-  (merge-pathnames (config-dir) #p"rotator.log"))
+  (merge-pathnames (config-dir-path) #p"rotator.log"))
 
 (defun init-logger (log-path)
   (setf (log-manager)
