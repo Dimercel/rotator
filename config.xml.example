@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<directories xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation='rotator.xsd'>
+  <directory path="/home/user">
+    <conditions>
+      <condition type="file-name">*.torrent</condition>
+      <condition type="file-size-more">1M</condition>
+      <condition type="age-greater">0y0M1d0h0m0s</condition>
+    </conditions>
+    <rotator id="remover">
+    </rotator>
+  </directory>
+</directories>
