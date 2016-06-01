@@ -7,6 +7,7 @@
                "xpath"
                "cl-ppcre"
                "cl-fad"
+               "rutils"
                "cl-log")
   :components ((:file "utils")
                (:file "config")

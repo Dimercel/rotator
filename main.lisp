@@ -3,8 +3,9 @@
            :log-file-path
            :bind-code
            :check-condition
+           :loop
            :init-logger)
-  (:use :common-lisp)
+  (:use :common-lisp :cl-fad)
   (:import-from :cl-log
                 :log-manager
                 :start-messenger
@@ -18,6 +19,7 @@
   (:import-from :rotator.config
                 :config-dir-path
                 :rules-config-exists?
+                :parse
                 :rules-config-path))
 
 (in-package :rotator)
@@ -48,6 +50,26 @@
         (make-instance 'log-manager :message-class 'formatted-message))
   (start-messenger 'text-file-messenger
                    :filename log-path))
+
+(defun all-conditions-true? (path conditions)
+  (not (numberp (position
+                 nil
+                 (map 'list
+                      (lambda (c)
+                        (check-condition
+                         (gethash :type c)
+                         path
+                         (gethash :value c)))
+                      conditions)))))
+
+(defun loop ()
+  (let ((directories (parse)))
+    (dolist (dir directories)
+      (dolist (file (cl-fad:list-directory (gethash :path dir)))
+        (let ((conditions (gethash :conditions dir)))
+          (if (not (cl-fad:directory-pathname-p file))
+              (if (all-conditions-true? file conditions)
+                  (format t "Rotate ~S~%" (namestring file)))))))))
 
 (defun main (argv)
   (declare (ignore argv))

@@ -3,6 +3,7 @@
         #:cxml
         #:xpath)
   (:import-from :cl-fad :file-exists-p)
+  (:import-from :rutils :ensure-keyword)
   (:import-from :rotator.utils
                 :xpath-attr-val)
   (:export :config-dir-path
@@ -41,11 +42,11 @@
   "Возвращает хэш с информацией о ротаторе, вытащенной
    из xml-конфига"
   (let ((result (make-hash-table)))
-    (setf (gethash "id" result)
+    (setf (gethash :id result)
           (xpath:string-value (xpath-attr-val "id" rot-node)))
     (xpath:map-node-set
      (lambda (x) (setf
-                  (gethash (xpath-attr-val "name" x) result)
+                  (gethash (ensure-keyword (xpath-attr-val "name" x)) result)
                   (xpath:string-value x)))
      (xpath:evaluate "//param" rot-node))
     result))
@@ -53,20 +54,20 @@
 (defun condition-info (cond-node)
   "Строит хэш на основании xml узла condition"
   (let ((result (make-hash-table)))
-    (setf (gethash "type" result) (xpath-attr-val "type" cond-node))
-    (setf (gethash "value" result) (xpath:string-value cond-node))
+    (setf (gethash :type result) (xpath-attr-val "type" cond-node))
+    (setf (gethash :value result) (xpath:string-value cond-node))
     result))
 
 (defun dir-info (dir-node)
   "Парсит узел-деректорию из xml-конфига. Внутри узла указана
    вся информация для ротации директории."
   (let ((result (make-hash-table)))
-    (setf (gethash "path" result) (xpath-attr-val "path" dir-node))
-    (setf (gethash "conditions" result)
+    (setf (gethash :path result) (xpath-attr-val "path" dir-node))
+    (setf (gethash :conditions result)
           (xpath:map-node-set->list
            (lambda (x) (condition-info x))
            (xpath:evaluate "//condition" dir-node)))
-    (setf (gethash "rotators" result)
+    (setf (gethash :rotators result)
           (xpath:map-node-set->list
            (lambda (x) (rotator-info x))
            (xpath:evaluate "//rotator" dir-node)))
