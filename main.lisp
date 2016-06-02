@@ -3,7 +3,7 @@
            :log-file-path
            :bind-code
            :check-condition
-           :loop
+           :main-loop
            :init-logger)
   (:use :common-lisp :cl-fad)
   (:import-from :cl-log
@@ -62,7 +62,7 @@
                          (gethash :value c)))
                       conditions)))))
 
-(defun loop ()
+(defun main-loop ()
   (let ((directories (parse)))
     (dolist (dir directories)
       (dolist (file (cl-fad:list-directory (gethash :path dir)))
