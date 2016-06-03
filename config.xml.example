@@ -5,7 +5,7 @@
   <directory path="/home/user">
     <conditions>
       <condition type="file-name">*.torrent</condition>
-      <condition type="file-size-more">1M</condition>
+      <condition type="file-size-more">1MB</condition>
       <condition type="age-greater">0y0M1d0h0m0s</condition>
     </conditions>
     <rotator id="remover">
