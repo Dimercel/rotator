@@ -28,16 +28,16 @@
 (defun log-label (rotator)
   "Возвращает 'подпись' ротатора для представления в
    лог-файле"
-  (concatenate 'string "[ROTATOR] (" (ident rotator) ")"))
+  (format nil "[ROTATOR] (~a)" (ident rotator) ))
 
 (defclass remover (rotator)
   ())
 
 (defmethod initialize-instance :after ((self remover) &key)
-  (setf (slot-value self 'ident) "remover"))
+  (setf (slot-value self 'ident) :remover))
 
 (defmethod rotate ((self remover) path)
   (progn
     (delete-file (pathname path))
     (log-message :info
-                 (concatenate 'string (log-label self) " " path " успешно удален"))))
+                 (format nil "~a ~s успешно удален." (log-label self) path))))

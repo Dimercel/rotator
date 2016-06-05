@@ -1,6 +1,5 @@
 (defpackage :rotator
-  (:export :main
-           :main-loop)
+  (:export :main)
   (:use :common-lisp :cl-fad)
   (:import-from :cl-log
                 :log-manager
@@ -13,7 +12,13 @@
                 :file-name-match
                 :file-size-less)
   (:import-from :rutils
-                :with-gensyms)
+                :with-gensyms
+                :ensure-keyword)
+  (:import-from :rotator.rotator
+                :ident
+                :params
+                :rotate
+                :remover)
   (:import-from :rotator.config
                 :config-dir-path
                 :rules-config-exists?
@@ -21,6 +26,16 @@
                 :rules-config-path))
 
 (in-package :rotator)
+
+
+(defvar *rotators* (make-hash-table))
+
+(defun create-rotators ()
+  "Заполняет глобальный хэш *rotators* всеми доступными
+   ротаторами. В качестве ключа выступает идентификатор ротатора"
+  (let ((remover-ins (make-instance 'remover)))
+    (progn
+      (setf (gethash (ident remover-ins) *rotators*) remover-ins))))
 
 
 ;; Нижеследующий макрос связывает значение с каким-либо кодом.
@@ -39,13 +54,23 @@
     ("file-size-more"  (file-size-more path limit))
     ("file-size-less"  (file-size-less path limit))))
 
+(defun rotate-file (path rotator-id)
+  (let ((cur-rotator (gethash rotator-id *rotators*)))
+    (if cur-rotator
+        (rotate cur-rotator path)
+        (log-message
+         :warning
+         (format nil
+                 "Ротатор с идентификатором ~S не существует!"
+                 rotator-id)))))
+
 (defun is-file? (path)
   (if (not (cl-fad:directory-pathname-p path))
       t
       nil))
 
 (defmacro with-item-in-dir (symbol dir-path predicate &body body)
-  (rutils:with-gensyms (dir-item)
+  (with-gensyms (dir-item)
     `(if (cl-fad:directory-exists-p ,dir-path)
          (dolist (,dir-item (cl-fad:list-directory ,dir-path))
            (if (,predicate ,dir-item)
@@ -76,14 +101,21 @@
 (defun main-loop ()
   (let ((directories (parse)))
     (dolist (dir directories)
-      (let ((conditions (gethash :conditions dir)))
+      (let ((conditions (gethash :conditions dir))
+            (rotators (gethash :rotators dir)))
         (with-item-in-dir file (gethash :path dir) is-file?
           (if (all-conditions-true? file conditions)
-              (format t "Rotate ~S~%" (namestring file))))))))
+              (dolist (r rotators)
+                (rotate-file
+                 (namestring file)
+                 (ensure-keyword (gethash :id r))))))))))
 
 (defun main (argv)
   (declare (ignore argv))
   (cond ((not (rules-config-exists?))
          (format t "Файл ~S не существует!"
                  (namestring (rules-config-path))))
-        (t (main-loop))))
+        (t (progn
+             (create-rotators)
+             (init-logger (log-file-path))
+             (main-loop)))))
