@@ -40,4 +40,4 @@
   (progn
     (delete-file (pathname path))
     (log-message :info
-                 (format nil "~a ~s успешно удален." (log-label self) path))))
+                 (format nil "~a Файл ~s успешно удален." (log-label self) path))))

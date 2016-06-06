@@ -2,6 +2,7 @@
   (:use :common-lisp
         :xpath)
   (:export :xpath-attr-val
+           :pretty-universal-time
            :re-begin-and-end-str))
 
 (in-package :rotator.utils)
@@ -18,3 +19,15 @@
   "Добавляет спецификаторы начала и конца
    строки в рег. выражение"
   (concatenate 'string "^" reg-exp "$"))
+
+(defun pretty-universal-time (time)
+  (multiple-value-bind
+        (second minute hour date month year)
+      (decode-universal-time time)
+    (format nil "~2,'0d.~2,'0d.~d ~2,'0d:~2,'0d:~2,'0d"
+            date
+            month
+            year
+            hour
+            minute
+            second)))

@@ -1,24 +1,19 @@
 (defpackage :rotator
   (:export :main)
-  (:use :common-lisp :cl-fad)
-  (:import-from :cl-log
-                :log-manager
-                :start-messenger
-                :text-file-messenger
-                :formatted-message
-                :log-message)
+  (:use :common-lisp :cl-fad :cl-log)
+  (:import-from :rutils
+                :with-gensyms
+                :ensure-keyword)
   (:import-from :rotator.condition
                 :file-size-more
                 :file-name-match
                 :file-size-less)
-  (:import-from :rutils
-                :with-gensyms
-                :ensure-keyword)
   (:import-from :rotator.rotator
                 :ident
                 :params
                 :rotate
                 :remover)
+  (:import-from :rotator.utils :pretty-universal-time)
   (:import-from :rotator.config
                 :config-dir-path
                 :rules-config-exists?
@@ -81,10 +76,24 @@
   "Возвращает путь до главного лог-файла"
   (merge-pathnames (config-dir-path) #p"rotator.log"))
 
+
+(defclass rotator-base-message (cl-log:formatted-message)
+  ())
+
+(defmethod format-message ((self rotator-base-message))
+  (format nil "~a ~a ~?~&"
+          (pretty-universal-time
+           (cl-log:timestamp-universal-time
+            (cl-log:message-timestamp self)))
+          (cl-log:message-category self)
+          (cl-log:message-description self)
+          (cl-log:message-arguments self)))
+
+
 (defun init-logger (log-path)
-  (setf (log-manager)
-        (make-instance 'log-manager :message-class 'formatted-message))
-  (start-messenger 'text-file-messenger
+  (setf (cl-log:log-manager)
+        (make-instance 'cl-log:log-manager :message-class 'rotator-base-message))
+  (cl-log:start-messenger 'cl-log:text-file-messenger
                    :filename log-path))
 
 (defun all-conditions-true? (path conditions)
