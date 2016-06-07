@@ -97,15 +97,16 @@
                    :filename log-path))
 
 (defun all-conditions-true? (path conditions)
-  (not (numberp (position
-                 nil
-                 (map 'list
-                      (lambda (c)
-                        (check-condition
-                         (gethash :type c)
-                         path
-                         (gethash :value c)))
-                      conditions)))))
+  (let ((result t))
+    (dolist (c conditions)
+      (if (eql nil (check-condition
+                    (gethash :type c)
+                    path
+                    (gethash :value c)))
+          (progn
+            (setf result nil)
+            (return))))
+    result))
 
 (defun main-loop ()
   (let ((directories (parse)))
