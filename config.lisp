@@ -48,7 +48,7 @@
      (lambda (x) (setf
                   (gethash (ensure-keyword (xpath-attr-val "name" x)) result)
                   (xpath:string-value x)))
-     (xpath:evaluate "//param" rot-node))
+     (xpath:evaluate "./param" rot-node))
     result))
 
 (defun condition-info (cond-node)
@@ -66,11 +66,11 @@
     (setf (gethash :conditions result)
           (xpath:map-node-set->list
            (lambda (x) (condition-info x))
-           (xpath:evaluate "//condition" dir-node)))
+           (xpath:evaluate ".//condition" dir-node)))
     (setf (gethash :rotators result)
           (xpath:map-node-set->list
            (lambda (x) (rotator-info x))
-           (xpath:evaluate "//rotator" dir-node)))
+           (xpath:evaluate ".//rotator" dir-node)))
     result))
 
 (defun rotated-directories (document)

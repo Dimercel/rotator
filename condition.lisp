@@ -1,6 +1,8 @@
 (defpackage :rotator.condition
   (:export :file-size-more
            :file-name-match
+           :always-true
+           :always-false
            :file-size-less)
   (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
@@ -73,3 +75,11 @@
   (if (scan (name-pattern-to-re pattern) (file-namestring path))
       t
       nil))
+
+;; Условие всегда возвращает истину
+(defcondition always-true (path limit)
+  t)
+
+;; Условие всегда возвращает ложь
+(defcondition always-false (path limit)
+  nil)

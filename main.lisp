@@ -7,11 +7,14 @@
   (:import-from :rotator.condition
                 :file-size-more
                 :file-name-match
+                :always-true
+                :always-false
                 :file-size-less)
   (:import-from :rotator.rotator
                 :ident
                 :params
                 :rotate
+                :info
                 :remover)
   (:import-from :rotator.utils :pretty-universal-time)
   (:import-from :rotator.config
@@ -28,8 +31,10 @@
 (defun create-rotators ()
   "Заполняет глобальный хэш *rotators* всеми доступными
    ротаторами. В качестве ключа выступает идентификатор ротатора"
-  (let ((remover-ins (make-instance 'remover)))
+  (let ((remover-ins (make-instance 'remover))
+        (info-ins    (make-instance 'info)))
     (progn
+      (setf (gethash (ident info-ins) *rotators*) info-ins)
       (setf (gethash (ident remover-ins) *rotators*) remover-ins))))
 
 
@@ -47,6 +52,8 @@
   (bind-code cond-id nil
     ("file-name-match" (file-name-match path limit))
     ("file-size-more"  (file-size-more path limit))
+    ("always-true"     (always-true path limit))
+    ("always-false"    (always-false path limit))
     ("file-size-less"  (file-size-less path limit))))
 
 (defun rotate-file (path rotator-id)
@@ -112,7 +119,7 @@
   (let ((directories (parse)))
     (dolist (dir directories)
       (let ((conditions (gethash :conditions dir))
-            (rotators (gethash :rotators dir)))
+            (rotators   (gethash :rotators   dir)))
         (with-item-in-dir file (gethash :path dir) is-file?
           (if (all-conditions-true? file conditions)
               (dolist (r rotators)

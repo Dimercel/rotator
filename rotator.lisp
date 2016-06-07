@@ -1,6 +1,7 @@
 (defpackage :rotator.rotator
   (:export :remover
            :ident
+           :info
            :params
            :rotate)
   (:import-from :cl-log
@@ -40,4 +41,14 @@
   (progn
     (delete-file (pathname path))
     (log-message :info
-                 (format nil "~a Файл ~s успешно удален." (log-label self) path))))
+                 (format nil "~a Файл ~s успешно удален" (log-label self) path))))
+
+(defclass info (rotator)
+  ())
+
+(defmethod initialize-instance :after ((self info) &key)
+  (setf (slot-value self 'ident) :info))
+
+(defmethod rotate ((self info) path)
+    (log-message :info
+                 (format nil "~a Файл ~s был подвергнут ротации" (log-label self) path)))
