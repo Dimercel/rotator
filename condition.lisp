@@ -8,6 +8,7 @@
   (:import-from :cl-fad :file-exists-p)
   (:import-from :cl-ppcre
                 :regex-replace-all
+                :scan-to-strings
                 :scan)
   (:import-from :rotator.utils
                 :re-begin-and-end-str))
@@ -45,6 +46,20 @@
    (regex-replace-all "\\*"
                       (regex-replace-all "\\." expr "\\.")
                       ".*")))
+
+(defun parse-duration-value (duration suffix)
+  (let*  ((reg-exp (format nil "[^\\d](\\d{1,3})~a" suffix))
+          (result (multiple-value-list
+                   (scan-to-strings reg-exp duration))))
+    (if (not (null (first result)))
+        (parse-integer (elt (second result) 0))
+        nil)))
+
+(defun duration-to-seconds (duration)
+  "Функция парсит указанный в строке временной промежуток и возвращает
+   кол-во секунд в нем. Пример промежутка '10s 1m 60h 7D 13M 1Y'.
+   s - секунды, m - минуты, h - часы, D - дни, M - месяцы, Y - года"
+  nil)
 
 (defmacro defcondition (name params &body form)
   `(defun ,name ,params
