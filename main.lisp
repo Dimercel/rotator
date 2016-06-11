@@ -6,10 +6,13 @@
                 :ensure-keyword)
   (:import-from :rotator.condition
                 :file-size-more
+                :file-size-less
                 :file-name-match
+                :file-name-not-match
+                :file-age-greater
+                :file-age-less
                 :always-true
-                :always-false
-                :file-size-less)
+                :always-false)
   (:import-from :rotator.rotator
                 :ident
                 :params
@@ -50,11 +53,14 @@
 
 (defun check-condition (cond-id path limit)
   (bind-code cond-id nil
-    ("file-name-match" (file-name-match path limit))
-    ("file-size-more"  (file-size-more path limit))
-    ("always-true"     (always-true path limit))
-    ("always-false"    (always-false path limit))
-    ("file-size-less"  (file-size-less path limit))))
+    ("file-name-match"     (file-name-match path limit))
+    ("file-name-not-match" (file-name-not-match path limit))
+    ("file-size-more"      (file-size-more path limit))
+    ("always-true"         (always-true path limit))
+    ("always-false"        (always-false path limit))
+    ("file-age-greater"    (file-age-greater path limit))
+    ("file-age-less"       (file-age-less path limit))
+    ("file-size-less"      (file-size-less path limit))))
 
 (defun rotate-file (path rotator-id)
   (let ((cur-rotator (gethash rotator-id *rotators*)))

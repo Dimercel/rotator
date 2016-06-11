@@ -1,11 +1,19 @@
 (defpackage :rotator.condition
   (:export :file-size-more
+           :file-size-less
            :file-name-match
+           :file-name-not-match
+           :file-age-greater
+           :file-age-less
            :always-true
-           :always-false
-           :file-size-less)
+           :always-false)
   (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
+  (:import-from :local-time
+                :timestamp-
+                :timestamp<
+                :universal-to-timestamp
+                :now)
   (:import-from :cl-ppcre
                 :regex-replace-all
                 :scan-to-strings
@@ -47,19 +55,33 @@
                       (regex-replace-all "\\." expr "\\.")
                       ".*")))
 
-(defun parse-duration-value (duration suffix)
+(defun parse-duration-value (duration suffix &optional (bad-value nil))
   (let*  ((reg-exp (format nil "[^\\d](\\d{1,3})~a" suffix))
           (result (multiple-value-list
-                   (scan-to-strings reg-exp duration))))
+                   (scan-to-strings reg-exp
+                                    (format nil " ~a" duration)))))
     (if (not (null (first result)))
         (parse-integer (elt (second result) 0))
-        nil)))
+        bad-value)))
 
-(defun duration-to-seconds (duration)
-  "Функция парсит указанный в строке временной промежуток и возвращает
-   кол-во секунд в нем. Пример промежутка '10s 1m 60h 7D 13M 1Y'.
-   s - секунды, m - минуты, h - часы, D - дни, M - месяцы, Y - года"
-  nil)
+(defun offset-date-in-past (date duration)
+  "Функция парсит указанный в строке временной промежуток и
+   вычитает его из date. Примеры промежутка '10s 1m 60h 7D 13M 1Y',
+   '10m 6D', '7D 10m 1s'. s - секунды, m - минуты, h - часы, D - дни,
+   M - месяцы, Y - года"
+  (let ((sec    (parse-duration-value duration "s" 0))
+        (minute (parse-duration-value duration "m" 0))
+        (hour   (parse-duration-value duration "h" 0))
+        (day    (parse-duration-value duration "D" 0))
+        (month  (parse-duration-value duration "M" 0))
+        (year   (parse-duration-value duration "Y" 0)))
+    (timestamp-
+     (timestamp-
+      (timestamp-
+       (timestamp-
+        (timestamp-
+         (timestamp-
+          date sec :sec) minute :minute) hour :hour) day :day) month :month) year :year)))
 
 (defmacro defcondition (name params &body form)
   `(defun ,name ,params
@@ -91,10 +113,27 @@
       t
       nil))
 
+;; Имя файла не соответствует указанному шаблону?
+(defcondition file-name-not-match (path pattern)
+  (not (file-name-match path pattern)))
+
 ;; Условие всегда возвращает истину
-(defcondition always-true (path limit)
+(defcondition always-true (path)
   t)
 
 ;; Условие всегда возвращает ложь
-(defcondition always-false (path limit)
+(defcondition always-false (path)
   nil)
+
+;; Количество времени, прошедшего с момента последней записи в
+;; файл, больше указанного лимита?
+(defcondition file-age-greater (path limit)
+  (let ((file-mod-date
+          (universal-to-timestamp (file-write-date path)))
+        (limit-date (offset-date-in-past (now) limit)))
+    (timestamp< file-mod-date limit-date)))
+
+;; Количество времени, прошедшего с момента последней записи в
+;; файл, меньше указанного лимита?
+(defcondition file-age-less (path limit)
+  (not (age-greater path limit)))
