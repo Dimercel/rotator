@@ -124,14 +124,15 @@
 (defun main-loop ()
   (let ((directories (parse)))
     (dolist (dir directories)
-      (let ((conditions (gethash :conditions dir))
-            (rotators   (gethash :rotators   dir)))
-        (with-item-in-dir file (gethash :path dir) is-file?
-          (if (all-conditions-true? file conditions)
-              (dolist (r rotators)
-                (rotate-file
-                 (namestring file)
-                 (ensure-keyword (gethash :id r))))))))))
+      (dolist (rule (gethash :rules dir))
+        (let ((conditions (gethash :conditions rule))
+              (rotators   (gethash :rotators   rule)))
+          (with-item-in-dir file (gethash :path dir) is-file?
+            (if (all-conditions-true? file conditions)
+                (dolist (r rotators)
+                  (rotate-file
+                   (namestring file)
+                   (ensure-keyword (gethash :id r)))))))))))
 
 (defun main (argv)
   (declare (ignore argv))

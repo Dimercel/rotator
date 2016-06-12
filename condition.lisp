@@ -118,12 +118,16 @@
   (not (file-name-match path pattern)))
 
 ;; Условие всегда возвращает истину
-(defcondition always-true (path)
-  t)
+(defcondition always-true (path limit)
+  (progn
+    (eq path limit) ; чтобы компилятор не выдавал предупреждения
+    t))
 
 ;; Условие всегда возвращает ложь
-(defcondition always-false (path)
-  nil)
+(defcondition always-false (path limit)
+  (progn
+    (eq path limit) ; чтобы компилятор не выдавал предупреждения
+    nil))
 
 ;; Количество времени, прошедшего с момента последней записи в
 ;; файл, больше указанного лимита?
@@ -136,4 +140,4 @@
 ;; Количество времени, прошедшего с момента последней записи в
 ;; файл, меньше указанного лимита?
 (defcondition file-age-less (path limit)
-  (not (age-greater path limit)))
+  (not (file-age-greater path limit)))

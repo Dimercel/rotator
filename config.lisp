@@ -58,19 +58,30 @@
     (setf (gethash :value result) (xpath:string-value cond-node))
     result))
 
+(defun rule-info (rule-node)
+  "Возвращает хэш с информацией о правиле ротации. Одна директория
+   может содержать несколько правил, внутри которых могут быть
+   несколько условий и ротаторов"
+  (let ((result (make-hash-table)))
+    (setf (gethash :conditions result)
+          (xpath:map-node-set->list
+           (lambda (x) (condition-info x))
+           (xpath:evaluate ".//condition" rule-node)))
+    (setf (gethash :rotators result)
+          (xpath:map-node-set->list
+           (lambda (x) (rotator-info x))
+           (xpath:evaluate ".//rotator" rule-node)))
+    result))
+
 (defun dir-info (dir-node)
   "Парсит узел-деректорию из xml-конфига. Внутри узла указана
    вся информация для ротации директории."
   (let ((result (make-hash-table)))
     (setf (gethash :path result) (xpath-attr-val "path" dir-node))
-    (setf (gethash :conditions result)
+    (setf (gethash :rules result)
           (xpath:map-node-set->list
-           (lambda (x) (condition-info x))
-           (xpath:evaluate ".//condition" dir-node)))
-    (setf (gethash :rotators result)
-          (xpath:map-node-set->list
-           (lambda (x) (rotator-info x))
-           (xpath:evaluate ".//rotator" dir-node)))
+           (lambda (x) (rule-info x))
+           (xpath:evaluate ".//rule" dir-node)))
     result))
 
 (defun rotated-directories (document)
