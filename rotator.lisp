@@ -19,7 +19,7 @@
    (params
     :initarg :params
     :accessor params
-    :initform '())))
+    :initform nil)))
 
 (defgeneric rotate (rotator path)
   (:documentation "Здесь происходит ротация файла,
@@ -42,6 +42,28 @@
     (delete-file (pathname path))
     (log-message :info
                  (format nil "~a Файл ~s успешно удален" (log-label self) path))))
+
+(defclass mover (rotator)
+  ())
+
+(defmethod initialize-instance :after ((self mover) &key)
+  (setf (slot-value self 'ident) :mover)
+  (setf (slot-value self 'params) (make-hash-table)))
+
+(defmethod rotate ((self mover) path)
+  (let* ((move-path (gethash :path (params self)))
+         (new-path (format nil "~a/~a" move-path (file-namestring path))))
+    (cond
+      ((null move-path)
+       (log-message :warning
+                    (format nil "~a Не указан обязательный параметр path" (log-label self))))
+      ((not (file-exists-p move-path))
+       (log-message :warning
+                    (format nil "~a Директория ~s не существует" (log-label self) move-path)))
+      ((file-exists-p new-path)
+       (log-message :warning
+                    (format nil "~a Путь ~s уже существует") (log-label self) new-path))
+      (t (rename-file path new-path)))))
 
 (defclass info (rotator)
   ())

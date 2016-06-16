@@ -35,11 +35,12 @@
   "Заполняет глобальный хэш *rotators* всеми доступными
    ротаторами. В качестве ключа выступает идентификатор ротатора"
   (let ((remover-ins (make-instance 'remover))
-        (info-ins    (make-instance 'info)))
+        (info-ins    (make-instance 'info))
+        (mover-ins   (make-instance 'mover)))
     (progn
       (setf (gethash (ident info-ins) *rotators*) info-ins)
-      (setf (gethash (ident remover-ins) *rotators*) remover-ins))))
-
+      (setf (gethash (ident remover-ins) *rotators*) remover-ins)
+      (setf (gethash (ident mover-ins) *rotators*) mover-ins))))
 
 ;; Нижеследующий макрос связывает значение с каким-либо кодом.
 ;; Такая необходимость нужна когда поток выполнения зависит
