@@ -42,11 +42,12 @@
   "Возвращает хэш с информацией о ротаторе, вытащенной
    из xml-конфига"
   (let ((result (make-hash-table)))
+    (setf (gethash :params result) (make-hash-table))
     (setf (gethash :id result)
           (xpath:string-value (xpath-attr-val "id" rot-node)))
     (xpath:map-node-set
      (lambda (x) (setf
-                  (gethash (ensure-keyword (xpath-attr-val "name" x)) result)
+                  (gethash (ensure-keyword (xpath-attr-val "name" x)) (gethash :params result))
                   (xpath:string-value x)))
      (xpath:evaluate "./param" rot-node))
     result))

@@ -1,5 +1,6 @@
 (defpackage :rotator.rotator
   (:export :remover
+           :mover
            :ident
            :info
            :params
@@ -31,6 +32,7 @@
    лог-файле"
   (format nil "[ROTATOR] (~a)" (ident rotator) ))
 
+
 (defclass remover (rotator)
   ())
 
@@ -43,6 +45,7 @@
     (log-message :info
                  (format nil "~a Файл ~s успешно удален" (log-label self) path))))
 
+
 (defclass mover (rotator)
   ())
 
@@ -53,17 +56,36 @@
 (defmethod rotate ((self mover) path)
   (let* ((move-path (gethash :path (params self)))
          (new-path (format nil "~a/~a" move-path (file-namestring path))))
-    (cond
-      ((null move-path)
-       (log-message :warning
-                    (format nil "~a Не указан обязательный параметр path" (log-label self))))
-      ((not (file-exists-p move-path))
-       (log-message :warning
-                    (format nil "~a Директория ~s не существует" (log-label self) move-path)))
-      ((file-exists-p new-path)
-       (log-message :warning
-                    (format nil "~a Путь ~s уже существует") (log-label self) new-path))
-      (t (rename-file path new-path)))))
+    (handler-case
+        (cond
+          ((null move-path)
+           (log-message :warning
+                        (format nil "~a Не указан обязательный параметр path"
+                                (log-label self))))
+          ((not (file-exists-p move-path))
+           (log-message :warning
+                        (format nil "~a Директория ~s не существует"
+                                (log-label self)
+                                move-path)))
+          ((file-exists-p new-path)
+           (log-message :warning
+                        (format nil "~a Путь ~s уже существует"
+                                (log-label self)
+                                new-path)))
+          (t (progn
+               (rename-file path new-path)
+               (log-message :info
+                            (format nil "~a Файл ~s перемещен в ~s"
+                                    (log-label self)
+                                    path
+                                    new-path)))))
+      (sb-int:simple-file-error (e)
+        (log-message :warning
+                     (format nil "~a Не удалось переместить ~s в ~s"
+                             (log-label self)
+                             path
+                             new-path))))))
+
 
 (defclass info (rotator)
   ())

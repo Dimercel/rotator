@@ -18,6 +18,7 @@
                 :params
                 :rotate
                 :info
+                :mover
                 :remover)
   (:import-from :rotator.utils :pretty-universal-time)
   (:import-from :rotator.config
@@ -63,10 +64,12 @@
     ("file-age-less"       (file-age-less path limit))
     ("file-size-less"      (file-size-less path limit))))
 
-(defun rotate-file (path rotator-id)
+(defun rotate-file (path rotator-id &optional (parameters nil))
   (let ((cur-rotator (gethash rotator-id *rotators*)))
     (if cur-rotator
-        (rotate cur-rotator path)
+        (progn
+          (setf (params cur-rotator) parameters)
+          (rotate cur-rotator path))
         (log-message
          :warning
          (format nil
@@ -133,7 +136,8 @@
                 (dolist (r rotators)
                   (rotate-file
                    (namestring file)
-                   (ensure-keyword (gethash :id r)))))))))))
+                   (ensure-keyword (gethash :id r))
+                   (gethash :params r))))))))))
 
 (defun main (argv)
   (declare (ignore argv))
