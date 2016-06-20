@@ -2,7 +2,9 @@
   (:use #:cl
         #:cxml
         #:xpath)
-  (:import-from :cl-fad :file-exists-p)
+  (:import-from :cl-fad
+                :file-exists-p
+                :directory-exists-p)
   (:import-from :rutils :ensure-keyword)
   (:import-from :rotator.utils
                 :xpath-attr-val)
@@ -102,3 +104,11 @@
        (config-root-element
         (rules-config-path)))
       nil))
+
+(defun validate-dir-paths (root-node)
+  "Проверяет на существование все пути к просматриваемым
+   директориям в конфиге"
+  (every (lambda (x) (not (eql nil x)))
+         (xpath:map-node-set->list
+          (lambda (dir-node) (directory-exists-p (xpath:string-value dir-node)))
+          (xpath:evaluate "//directory/@path" root-node))))
