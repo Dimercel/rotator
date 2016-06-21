@@ -6,6 +6,8 @@
                 :file-exists-p
                 :directory-exists-p)
   (:import-from :rutils :ensure-keyword)
+  (:import-from :cl-log
+                :log-message)
   (:import-from :rotator.utils
                 :xpath-attr-val)
   (:export :config-dir-path
@@ -94,21 +96,49 @@
    (lambda (node) (dir-info node))
    (xpath:evaluate "//directory" document)))
 
-(defun parse ()
-  "Собственно парсинг xml-конфига. В каждом directory-узле
-   содержится ин-ия о методе его ротации. Данная функция возвращает
-   список всех указанных в конфиге директорий, со всей ин-ей
-   об их ротации"
-  (if (rules-config-exists?)
-      (rotated-directories
-       (config-root-element
-        (rules-config-path)))
-      nil))
-
-(defun validate-dir-paths (root-node)
+(defun dir-paths-exists? (root-node)
   "Проверяет на существование все пути к просматриваемым
    директориям в конфиге"
   (every (lambda (x) (not (eql nil x)))
          (xpath:map-node-set->list
           (lambda (dir-node) (directory-exists-p (xpath:string-value dir-node)))
           (xpath:evaluate "//directory/@path" root-node))))
+
+(defun required-attr-exists? (root-node)
+  "Проверяет наличие обязательных атрибутов в xml-узлах конфига"
+  (and
+   (attr-exists? root-node "//directory" "path")
+   (attr-exists? root-node "//conditions/condition" "type")
+   (attr-exists? root-node "//rotator" "id")))
+
+(defun attr-exists? (root-node selector attr)
+  "Проверяет наличие указанного атрибута у выбранных
+   по селектору узлов"
+  (every (lambda (x) (eql nil x))
+         (xpath:map-node-set->list
+          (lambda (node) (xpath:node-set-empty-p
+                          (xpath:evaluate (concatenate 'string "@" attr) node)))
+          (xpath:evaluate selector root-node))))
+
+(defun config-valid (root-node)
+  (reduce
+   (lambda (acc x)
+     (if (eql nil (first x))
+         (progn
+           (log-message :error (second x))
+           nil)
+         acc))
+   `((,(required-attr-exists? root-node) "Указаны не все обязательные атрибуты!")
+     (,(dir-paths-exists? root-node) "Не все указанные пути существуют!"))
+   :initial-value t))
+
+(defun parse ()
+  "Собственно парсинг xml-конфига. В каждом directory-узле
+   содержится ин-ия о методе его ротации. Данная функция возвращает
+   список всех указанных в конфиге директорий, со всей ин-ей
+   об их ротации"
+  (let ((root-node (config-root-element (rules-config-path))))
+    (if (and (rules-config-exists?)
+             (config-valid root-node))
+        (rotated-directories root-node)
+        nil)))
