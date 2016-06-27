@@ -14,6 +14,17 @@
 (in-package :rotator.rotator)
 
 
+(defun unique-file-path (path &optional (index 0))
+  "Уникализирует имя файла путем добавления
+   к нему суффикса"
+  (concatenate 'string
+          (directory-namestring path)
+          (pathname-name path)
+          "."
+          (write-to-string index)
+          "."
+          (pathname-type path)))
+
 (defclass rotator ()
   ((ident
     :reader ident)
