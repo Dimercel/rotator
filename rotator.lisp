@@ -25,6 +25,17 @@
           "."
           (pathname-type path)))
 
+(defun find-new-file-path (path &optional (attempt 10))
+  (let ((result nil))
+    (dotimes (i attempt)
+      (let ((new-path (unique-file-path path i)))
+        (if (not (file-exists-p new-path))
+            (progn
+              (setf result new-path)
+              (return)))))
+    result))
+
+
 (defclass rotator ()
   ((ident
     :reader ident)
@@ -78,12 +89,9 @@
                         (format nil "~a Директория ~s не существует"
                                 (log-label self)
                                 move-path)))
-          ((file-exists-p new-path)
-           (log-message :warning
-                        (format nil "~a Путь ~s уже существует"
-                                (log-label self)
-                                new-path)))
           (t (progn
+               (if (file-exists-p new-path)
+                   (setf new-path (find-new-file-path new-path 20)))
                (rename-file path new-path)
                (log-message :info
                             (format nil "~a Файл ~s перемещен в ~s"
