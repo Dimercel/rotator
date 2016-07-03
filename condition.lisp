@@ -6,7 +6,6 @@
            :file-age-greater
            :file-age-less
            :always-true
-           :offset-date-in-past
            :always-false)
   (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
