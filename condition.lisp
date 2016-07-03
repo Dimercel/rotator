@@ -6,6 +6,7 @@
            :file-age-greater
            :file-age-less
            :always-true
+           :offset-date-in-past
            :always-false)
   (:use :common-lisp)
   (:import-from :cl-fad :file-exists-p)
@@ -69,19 +70,18 @@
    вычитает его из date. Примеры промежутка '10s 1m 60h 7D 13M 1Y',
    '10m 6D', '7D 10m 1s'. s - секунды, m - минуты, h - часы, D - дни,
    M - месяцы, Y - года"
-  (let ((sec    (parse-duration-value duration "s" 0))
-        (minute (parse-duration-value duration "m" 0))
-        (hour   (parse-duration-value duration "h" 0))
-        (day    (parse-duration-value duration "D" 0))
-        (month  (parse-duration-value duration "M" 0))
-        (year   (parse-duration-value duration "Y" 0)))
-    (timestamp-
-     (timestamp-
-      (timestamp-
-       (timestamp-
-        (timestamp-
-         (timestamp-
-          date sec :sec) minute :minute) hour :hour) day :day) month :month) year :year)))
+  (reduce (lambda (acc x)
+            (timestamp- acc (first x) (second x)))
+           (map 'list
+                (lambda (x)
+                  (list (parse-duration-value duration (first x) 0) (second x)))
+                '(("s" :sec)
+                  ("m" :minute)
+                  ("h" :hour)
+                  ("D" :day)
+                  ("M" :month)
+                  ("Y" :year)))
+          :initial-value date))
 
 (defmacro defcondition (name params &body form)
   `(defun ,name ,params
