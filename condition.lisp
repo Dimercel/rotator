@@ -46,7 +46,7 @@
   (cond ((equal suffix "B") 1)
         ((equal suffix "KB") 1024)
         ((equal suffix "MB") 1048576)
-        ((equal suffix "GB") 10737741824)
+        ((equal suffix "GB") 1073741824)
         (t 1)))
 
 (defun name-pattern-to-re (expr)
