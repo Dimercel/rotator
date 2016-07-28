@@ -59,13 +59,21 @@
   ())
 
 (defmethod initialize-instance :after ((self remover) &key)
-  (setf (slot-value self 'ident) :remover))
+  (setf (slot-value self 'ident) :remover)
+  (setf (slot-value self 'params) (make-hash-table))
+  (setf (slot-value self 'remove-count) (make-hash-table)))
 
 (defmethod rotate ((self remover) path)
-  (progn
-    (delete-file (pathname path))
-    (log-message :info
-                 (format nil "~a Файл ~s успешно удален" (log-label self) path))))
+  (let ((max-one-shot (gethash :max-one-shot (params self)))
+        (dir-remove-count
+          (gethash (directory-namestring path) (slot-value self 'remove-count))))
+    (if (or (null max-one-shot) (< max-one-shot dir-remove-count))
+        (progn
+          (delete-file (pathname path))
+          (setf (gethash (directory-namestring path) (slot-value self 'remove-count))
+                (1+ dir-remove-count))
+          (log-message :info
+                       (format nil "~a Файл ~s успешно удален" (log-label self) path))))))
 
 
 (defclass mover (rotator)
