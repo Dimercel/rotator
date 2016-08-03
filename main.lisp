@@ -16,6 +16,7 @@
   (:import-from :rotator.rotator
                 :ident
                 :params
+                :import-raw-params
                 :rotate
                 :info
                 :mover
@@ -68,7 +69,7 @@
   (let ((cur-rotator (gethash rotator-id *rotators*)))
     (if cur-rotator
         (progn
-          (setf (params cur-rotator) parameters)
+          (import-raw-params cur-rotator parameters)
           (rotate cur-rotator path))
         (log-message
          :warning

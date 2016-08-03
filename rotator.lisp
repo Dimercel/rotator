@@ -4,11 +4,15 @@
            :ident
            :info
            :params
+           :import-raw-params
            :rotate)
   (:import-from :cl-log
                 :log-message)
   (:import-from :cl-fad
                 :file-exists-p)
+  (:import-from :rutils
+                :print-hash-table
+                :sethash)
   (:use :common-lisp))
 
 (in-package :rotator.rotator)
@@ -35,7 +39,6 @@
               (return)))))
     result))
 
-
 (defclass rotator ()
   ((ident
     :reader ident)
@@ -49,6 +52,10 @@
    указанного в path"))
 
 
+(defgeneric import-raw-params (rotator raw-params)
+  (:documentation "Импортирует значения параметров ротатора
+   из обычного хеша"))
+
 (defun log-label (rotator)
   "Возвращает 'подпись' ротатора для представления в
    лог-файле"
@@ -58,23 +65,34 @@
 (defclass remover (rotator)
   ((remove-count
     :reader remove-count
-    :initform (make-hash-table))))
+    :initform (make-hash-table :test 'equal))))
 
 (defmethod initialize-instance :after ((self remover) &key)
   (setf (slot-value self 'ident) :remover)
-  (setf (slot-value self 'params) (make-hash-table)))
+  (setf (slot-value self 'params) (make-hash-table))
+  (sethash :max-one-shot
+           (slot-value self 'params) 100))
+
+
+(defmethod import-raw-params ((self remover) raw-params)
+  (setf (params self) (make-hash-table))
+  (when (gethash :max-one-shot raw-params)
+    (sethash :max-one-shot
+             (params self)
+             (parse-integer (gethash :max-one-shot raw-params) :junk-allowed t))))
 
 (defmethod rotate ((self remover) path)
   (let ((max-one-shot (gethash :max-one-shot (params self)))
         (dir-remove-count
           (gethash (directory-namestring path) (remove-count self))))
-    (if (or (null max-one-shot) (< max-one-shot dir-remove-count))
-        (progn
-          (delete-file (pathname path))
-          (setf (gethash (directory-namestring path) (remove-count self))
-                (1+ dir-remove-count))
-          (log-message :info
-                       (format nil "~a Файл ~s успешно удален" (log-label self) path))))))
+    (when (null dir-remove-count) (setf dir-remove-count 0))
+    (when (or (null max-one-shot) (< dir-remove-count max-one-shot))
+      (delete-file (pathname path))
+      (sethash (directory-namestring path)
+               (remove-count self)
+               (1+ dir-remove-count))
+      (log-message :info
+                   (format nil "~a Файл ~s успешно удален" (log-label self) path)))))
 
 
 (defclass mover (rotator)
@@ -83,6 +101,9 @@
 (defmethod initialize-instance :after ((self mover) &key)
   (setf (slot-value self 'ident) :mover)
   (setf (slot-value self 'params) (make-hash-table)))
+
+(defmethod import-raw-params ((self mover) raw-params)
+  nil)
 
 (defmethod rotate ((self mover) path)
   (let* ((move-path (gethash :path (params self)))
@@ -120,6 +141,9 @@
 
 (defmethod initialize-instance :after ((self info) &key)
   (setf (slot-value self 'ident) :info))
+
+(defmethod import-raw-params ((self info) raw-params)
+  nil)
 
 (defmethod rotate ((self info) path)
     (log-message :info
