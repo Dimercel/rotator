@@ -103,7 +103,11 @@
   (setf (slot-value self 'params) (make-hash-table)))
 
 (defmethod import-raw-params ((self mover) raw-params)
-  nil)
+  (setf (params self) (make-hash-table))
+  (when (gethash :path raw-params)
+    (sethash :path
+             (params self)
+             (gethash :path raw-params))))
 
 (defmethod rotate ((self mover) path)
   (let* ((move-path (gethash :path (params self)))
