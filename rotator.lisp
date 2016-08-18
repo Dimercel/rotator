@@ -13,6 +13,10 @@
   (:import-from :rutils
                 :print-hash-table
                 :sethash)
+  (:import-from :local-time
+                :format-timestring
+                :+iso-8601-format+
+                :now)
   (:use :common-lisp))
 
 (in-package :rotator.rotator)
@@ -25,11 +29,16 @@
           (directory-namestring path)
           (pathname-name path)
           "."
+          (format-timestring nil (now) :format +iso-8601-format+)
+          "."
           (write-to-string index)
           "."
           (pathname-type path)))
 
 (defun find-new-file-path (path &optional (attempt 10))
+  "Пытается построить такой файловый путь, чтобы файл
+   с таким именем не существовал. attempt - количество
+   попыток нахождения пути"
   (let ((result nil))
     (dotimes (i attempt)
       (let ((new-path (unique-file-path path i)))
