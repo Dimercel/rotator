@@ -99,12 +99,7 @@
 
 ;; Файл меньше указанного размера?
 (defcondition file-size-less (path limit)
-  (let ((limit-value (size-from-text limit)))
-    (if (and
-         limit-value
-         (scan "\\d+(KB|MB|GB|B)?" limit))
-        (< (file-size (pathname path)) limit-value)
-        nil)))
+  (not (file-size-more path limit)))
 
 ;; Имя файла соответствует указанному шаблону?
 (defcondition file-name-match (path pattern)
