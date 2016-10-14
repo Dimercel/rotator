@@ -13,6 +13,18 @@
   (:export :config-dir-path
            :rules-config-path
            :rules-config-exists?
+           :config-root-element
+           :directories
+           :directory-path
+           :rules
+           :conditions
+           :condition-value
+           :condition-type
+           :rotators
+           :rotator-id
+           :rotator-params
+           :param-name
+           :param-value
            :parse))
 
 (in-package #:rotator.config)
@@ -95,6 +107,72 @@
   (xpath:map-node-set->list
    (lambda (node) (dir-info node))
    (xpath:evaluate "//directory" document)))
+
+(defun node-value (node)
+  "Возвращает текст xml-узла"
+  (xpath:string-value node))
+
+(defun directories (root-node)
+  "Возвращает список со всеми отслеживаемыми
+   директориями."
+  (xpath:all-nodes
+   (xpath:evaluate "./directory" root-node)))
+
+(defun directory-path (dir-node)
+  "Возвращает значение атрибута path у директории"
+  (xpath-attr-val "path" dir-node))
+
+(defun rules (dir-node)
+  "Возвращает список правил, активных для директории. Каждое
+   правило может содержать набор условий и ротаторов"
+  (xpath:all-nodes
+   (xpath:evaluate "./rule" dir-node)))
+
+(defun conditions (rule-node &optional (type nil))
+  "Извлекает все условия из узла-правила"
+  (if (null type)
+      (xpath:all-nodes
+       (xpath:evaluate "./conditions/condition" rule-node))
+      (remove-if-not (lambda (x) (equal (xpath-attr-val "type" x)
+                                        type))
+                     (xpath:all-nodes
+                      (xpath:evaluate "./conditions/condition" rule-node)))))
+
+(defun condition-type (cond-node)
+  ""
+  (xpath-attr-val "type" cond-node))
+
+(defun condition-value (cond-node)
+  ""
+  (node-value cond-node))
+
+(defun rotators (rule-node &optional (id nil))
+  "Извлекает все ротаторы из узла-правила"
+  (if (null id)
+      (xpath:all-nodes
+       (xpath:evaluate "./rotator" rule-node))
+      (remove-if-not (lambda (x) (equal (xpath-attr-val "id" x)
+                                        id))
+                     (xpath:all-nodes
+                      (xpath:evaluate "./rotator" rule-node)))))
+
+(defun rotator-id (rotator-node)
+  ""
+  (xpath-attr-val"id" rotator-node))
+
+(defun rotator-params (rotator-node)
+  ""
+  (xpath:all-nodes
+   (xpath:evaluate "./param" rotator-node)))
+
+(defun param-name (param-node)
+  ""
+  (xpath-attr-val "name" param-node))
+
+(defun param-value (param-node)
+  ""
+  (node-value param-node))
+
 
 (defun dir-paths-exists? (root-node)
   "Проверяет на существование все пути к просматриваемым
