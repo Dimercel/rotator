@@ -24,8 +24,18 @@
   (:import-from :rotator.utils :pretty-universal-time)
   (:import-from :rotator.config
                 :config-dir-path
+                :config-root-element
                 :rules-config-exists?
-                :parse
+                :rules-config-path
+                :directories
+                :rules
+                :directory-path
+                :conditions
+                :condition-type
+                :condition-value
+                :rotators
+                :rotator-id
+                :rotator-params
                 :rules-config-path))
 
 (in-package :rotator)
@@ -55,6 +65,7 @@
        (t ,bad-value)))
 
 (defun check-condition (cond-id path limit)
+  "Собственно проверка на выполнение условия."
   (bind-code cond-id nil
     ("file-name-match"     (file-name-match path limit))
     ("file-name-not-match" (file-name-not-match path limit))
@@ -66,6 +77,7 @@
     ("file-size-less"      (file-size-less path limit))))
 
 (defun rotate-file (path rotator-id &optional (parameters nil))
+  "Осуществляет ротацию файла указанным ротатором."
   (let ((cur-rotator (gethash rotator-id *rotators*)))
     (if cur-rotator
         (progn
@@ -115,30 +127,24 @@
                    :filename log-path))
 
 (defun all-conditions-true? (path conditions)
-  (let ((result t))
-    (dolist (c conditions)
-      (if (eql nil (check-condition
-                    (gethash :type c)
-                    path
-                    (gethash :value c)))
-          (progn
-            (setf result nil)
-            (return))))
-    result))
+  (reduce (lambda (acc x)
+            (and acc (check-condition (condition-type x)
+                                      path
+                                      (condition-value x))))
+          conditions
+          :initial-value t))
 
 (defun main-loop ()
-  (let ((directories (parse)))
-    (dolist (dir directories)
-      (dolist (rule (gethash :rules dir))
-        (let ((conditions (gethash :conditions rule))
-              (rotators   (gethash :rotators   rule)))
-          (with-item-in-dir file (gethash :path dir) is-file?
-            (if (all-conditions-true? file conditions)
-                (dolist (r rotators)
-                  (rotate-file
-                   (namestring file)
-                   (ensure-keyword (gethash :id r))
-                   (gethash :params r))))))))))
+  (let (root (config-root-element (rules-config-path)))
+    (dolist (dir (directories root))
+      (dolist (rule (rules dir))
+        (with-item-in-dir file (directory-path dir) is-file
+          (when (all-conditions-true? file (conditions rule))
+            (dolist (r (rotators rule))
+              (rotate-file
+               (namestring file)
+               (ensure-keyword (rotator-id r))
+               (rotator-params r)))))))))
 
 (defun main (argv)
   (declare (ignore argv))
