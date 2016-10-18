@@ -134,10 +134,10 @@
          conditions))
 
 (defun main-loop ()
-  (let (root (config-root-element (rules-config-path)))
+  (let ((root (config-root-element (rules-config-path))))
     (dolist (dir (directories root))
       (dolist (rule (rules dir))
-        (with-item-in-dir file (directory-path dir) is-file
+        (with-item-in-dir file (directory-path dir) is-file?
           (when (all-conditions-true? file (conditions rule))
             (dolist (r (rotators rule))
               (rotate-file
