@@ -127,12 +127,11 @@
                    :filename log-path))
 
 (defun all-conditions-true? (path conditions)
-  (reduce (lambda (acc x)
-            (and acc (check-condition (condition-type x)
-                                      path
-                                      (condition-value x))))
-          conditions
-          :initial-value t))
+  (every (lambda (x)
+           (check-condition (condition-type x)
+                            path
+                            (condition-value x)))
+         conditions))
 
 (defun main-loop ()
   (let (root (config-root-element (rules-config-path)))
