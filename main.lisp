@@ -33,6 +33,7 @@
                 :conditions
                 :condition-type
                 :condition-value
+                :parse
                 :rotators
                 :rotator-id
                 :rotator-params
@@ -134,7 +135,7 @@
          conditions))
 
 (defun main-loop ()
-  (let ((root (config-root-element (rules-config-path))))
+  (let ((root (parse)))
     (dolist (dir (directories root))
       (dolist (rule (rules dir))
         (with-item-in-dir file (directory-path dir) is-file?
