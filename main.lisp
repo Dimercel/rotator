@@ -82,7 +82,9 @@
   (let ((cur-rotator (gethash rotator-id *rotators*)))
     (if cur-rotator
         (progn
-          (import-raw-params cur-rotator parameters)
+          (if parameters
+              (import-raw-params cur-rotator parameters)
+              (setf (params cur-rotator) nil))
           (rotate cur-rotator path))
         (log-message
          :warning

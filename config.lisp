@@ -10,6 +10,11 @@
                 :log-message)
   (:import-from :rotator.utils
                 :xpath-attr-val)
+  (:import-from :xpath
+                :all-nodes
+                :evaluate
+                :map-node-set->list
+                :string-value)
   (:export :config-dir-path
            :rules-config-path
            :rules-config-exists?
@@ -56,13 +61,13 @@
 
 (defun node-value (node)
   "Возвращает текст xml-узла"
-  (xpath:string-value node))
+  (string-value node))
 
 (defun directories (root-node)
   "Возвращает список со всеми отслеживаемыми
    директориями."
-  (xpath:all-nodes
-   (xpath:evaluate "./directory" root-node)))
+  (all-nodes
+   (evaluate "./directory" root-node)))
 
 (defun directory-path (dir-node)
   "Возвращает значение атрибута path у директории"
@@ -71,18 +76,18 @@
 (defun rules (dir-node)
   "Возвращает список правил, активных для директории. Каждое
    правило может содержать набор условий и ротаторов"
-  (xpath:all-nodes
-   (xpath:evaluate "./rule" dir-node)))
+  (all-nodes
+   (evaluate "./rule" dir-node)))
 
 (defun conditions (rule-node &optional (type nil))
   "Извлекает все условия из узла-правила"
-  (if (null type)
-      (xpath:all-nodes
-       (xpath:evaluate "./conditions/condition" rule-node))
-      (remove-if-not (lambda (x) (equal (xpath-attr-val "type" x)
-                                        type))
-                     (xpath:all-nodes
-                      (xpath:evaluate "./conditions/condition" rule-node)))))
+  (let ((all-conditions (all-nodes
+                         (evaluate "./conditions/condition" rule-node))))
+    (if (null type)
+        all-conditions
+        (remove-if-not (lambda (x) (equal (xpath-attr-val "type" x)
+                                          type))
+                       all-conditions))))
 
 (defun condition-type (cond-node)
   "Возвращает тип-идентификатор условия"
@@ -94,13 +99,13 @@
 
 (defun rotators (rule-node &optional (id nil))
   "Извлекает все ротаторы из узла-правила"
-  (if (null id)
-      (xpath:all-nodes
-       (xpath:evaluate "./rotator" rule-node))
-      (remove-if-not (lambda (x) (equal (xpath-attr-val "id" x)
-                                        id))
-                     (xpath:all-nodes
-                      (xpath:evaluate "./rotator" rule-node)))))
+  (let ((all-rotators (all-nodes
+                       (evaluate "./rotator" rule-node))))
+    (if (null id)
+        all-rotators
+        (remove-if-not (lambda (x) (equal (xpath-attr-val "id" x)
+                                          id))
+                       all-rotators))))
 
 (defun rotator-id (rotator-node)
   "Собственно идентификтор ротатора"
@@ -109,8 +114,8 @@
 (defun rotator-params (rotator-node)
   "Возвращает все параметры, указанные
    в ротаторе"
-  (xpath:all-nodes
-   (xpath:evaluate "./param" rotator-node)))
+  (all-nodes
+   (evaluate "./param" rotator-node)))
 
 (defun param-name (param-node)
   ""
@@ -125,9 +130,9 @@
   "Проверяет на существование все пути к просматриваемым
    директориям в конфиге"
   (every (lambda (x) (not (eql nil x)))
-         (xpath:map-node-set->list
-          (lambda (dir-node) (directory-exists-p (xpath:string-value dir-node)))
-          (xpath:evaluate "//directory/@path" root-node))))
+         (map-node-set->list
+          (lambda (dir-node) (directory-exists-p (string-value dir-node)))
+          (evaluate "//directory/@path" root-node))))
 
 (defun required-attr-exists? (root-node)
   "Проверяет наличие обязательных атрибутов в xml-узлах конфига"
@@ -140,10 +145,10 @@
   "Проверяет наличие указанного атрибута у выбранных
    по селектору узлов"
   (every (lambda (x) (eql nil x))
-         (xpath:map-node-set->list
-          (lambda (node) (xpath:node-set-empty-p
-                          (xpath:evaluate (concatenate 'string "@" attr) node)))
-          (xpath:evaluate selector root-node))))
+         (map-node-set->list
+          (lambda (node) (node-set-empty-p
+                          (evaluate (concatenate 'string "@" attr) node)))
+          (evaluate selector root-node))))
 
 (defun config-valid (root-node)
   (reduce
