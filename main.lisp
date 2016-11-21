@@ -37,6 +37,8 @@
                 :rotators
                 :rotator-id
                 :rotator-params
+                :param-name
+                :param-value
                 :rules-config-path))
 
 (in-package :rotator)
@@ -77,14 +79,23 @@
     ("file-age-less"       (file-age-less path limit))
     ("file-size-less"      (file-size-less path limit))))
 
+(defun params-to-hash (parameters)
+  ""
+  (if (null parameters)
+      (make-hash-table)
+      (let ((result (make-hash-table)))
+        (dolist (p parameters)
+          (setf (gethash (ensure-keyword (param-name p)) result)
+                (param-value p)))
+        result)))
+
 (defun rotate-file (path rotator-id &optional (parameters nil))
   "Осуществляет ротацию файла указанным ротатором."
   (let ((cur-rotator (gethash rotator-id *rotators*)))
     (if cur-rotator
         (progn
-          (if parameters
-              (import-raw-params cur-rotator parameters)
-              (setf (params cur-rotator) nil))
+          (import-raw-params cur-rotator
+                             (params-to-hash parameters))
           (rotate cur-rotator path))
         (log-message
          :warning
@@ -137,7 +148,7 @@
          conditions))
 
 (defun main-loop ()
-  (let ((root (parse)))
+  (let ((root (config-root-element (rules-config-path))))
     (dolist (dir (directories root))
       (dolist (rule (rules dir))
         (with-item-in-dir file (directory-path dir) is-file?
