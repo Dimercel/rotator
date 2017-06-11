@@ -7,8 +7,8 @@
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :rotator)' in your Lisp.
 
-(plan nil)
+(plan 1)
 
-;; blah blah blah.
+(ok (rotator.condition:always-true "" 0))
 
 (finalize)
