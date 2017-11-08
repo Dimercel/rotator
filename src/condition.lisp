@@ -4,10 +4,10 @@
            :file-name-match
            :file-name-not-match
            :file-age-greater
-           :file-age-less
-           :always-true
-           :always-false)
+           :file-age-less)
   (:use :common-lisp)
+  (:import-from :cl-rules
+                :defcond)
   (:import-from :cl-fad :file-exists-p)
   (:import-from :local-time
                 :timestamp-
@@ -50,12 +50,20 @@
         (t 1)))
 
 (defun name-pattern-to-re (expr)
+  "В конфиге правил ротации могут быть указаны паттерны
+   для имен файлов. Данная функция конвертирует такие
+   строки в корректные регулярные выражения"
   (re-begin-and-end-str
    (regex-replace-all "\\*"
                       (regex-replace-all "\\." expr "\\.")
                       ".*")))
 
 (defun parse-duration-value (duration suffix &optional (bad-value nil))
+  "Возвращает числовое значение из указанного в строке компонента
+   временного промежутка. Поиск компонента происходит по SUFFIX.
+   Если промежуток указан не корректно, то вернет BAD-VALUE.
+   Например: (parse-duration-value \"10D 30M\" \"M\") => 30
+             (parse-duration-value \"20D\" \"M\") => nil"
   (let*  ((reg-exp (format nil "[^\\d](\\d{1,3})~a" suffix))
           (result (multiple-value-list
                    (scan-to-strings reg-exp
@@ -82,14 +90,11 @@
                   ("Y" :year)))
           :initial-value date))
 
-(defmacro defcondition (name params &body form)
-  `(defun ,name ,params
-     (if (file-exists-p ,(first params))
-         ,@form
-         nil)))
 
-;; Файл больше указанного размера?
-(defcondition file-size-more (path limit)
+;;; Определение условий ротации
+
+
+(defun file-size-more (path limit)
   (let ((limit-value (size-from-text limit)))
     (if (and
          limit-value
@@ -97,41 +102,56 @@
         (> (file-size (pathname path)) limit-value)
         nil)))
 
-;; Файл меньше указанного размера?
-(defcondition file-size-less (path limit)
+;; Файл больше указанного размера?
+(defcond file-size-more (path limit)
+  (file-size-more path limit))
+
+(defun file-size-less (path limit)
   (not (file-size-more path limit)))
 
-;; Имя файла соответствует указанному шаблону?
-(defcondition file-name-match (path pattern)
+;; Файл меньше указанного размера?
+(defcond file-size-less (path limit)
+  (file-size-less path limit))
+
+(defun file-name-match (path pattern)
   (if (scan (name-pattern-to-re pattern) (file-namestring path))
       t
       nil))
 
-;; Имя файла не соответствует указанному шаблону?
-(defcondition file-name-not-match (path pattern)
+;; Имя файла соответствует указанному шаблону?
+(defcond file-name-match (path pattern)
+  (file-name-match path pattern))
+
+(defun file-name-not-match (path pattern)
   (not (file-name-match path pattern)))
 
-;; Условие всегда возвращает истину
-(defcondition always-true (path limit)
-  (progn
-    (eq path limit) ; чтобы компилятор не выдавал предупреждения
-    t))
+;; Имя файла не соответствует указанному шаблону?
+(defcond file-name-not-match (path pattern)
+  (file-name-not-match path pattern))
 
-;; Условие всегда возвращает ложь
-(defcondition always-false (path limit)
-  (progn
-    (eq path limit) ; чтобы компилятор не выдавал предупреждения
-    nil))
-
-;; Количество времени, прошедшего с момента последней записи в
-;; файл, больше указанного лимита?
-(defcondition file-age-greater (path limit)
+(defun file-age-greater (path limit)
   (let ((file-mod-date
           (universal-to-timestamp (file-write-date path)))
         (limit-date (offset-date-in-past (now) limit)))
     (timestamp< file-mod-date limit-date)))
 
 ;; Количество времени, прошедшего с момента последней записи в
-;; файл, меньше указанного лимита?
-(defcondition file-age-less (path limit)
+;; файл, больше указанного лимита?
+(defcond file-age-greater (path limit)
+  (file-age-greater path limit))
+
+(defun file-age-less (path limit)
   (not (file-age-greater path limit)))
+
+;; Количество времени, прошедшего с момента последней записи в
+;; файл, меньше указанного лимита?
+(defcond file-age-less (path limit)
+  (file-age-less path limit))
+
+;; Условие всегда возвращает истину
+(defcond always-true (path)
+  (or path t))
+
+;; Условие всегда возвращает ложь
+(defcondition always-false (path)
+  (and path nil))
