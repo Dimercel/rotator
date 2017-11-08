@@ -22,6 +22,7 @@
                :cl-fad
                :rutils
                :local-time
+               :cl-rules
                :cl-log)
   :components ((:module "src"
                 :components
