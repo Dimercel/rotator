@@ -1,36 +1,19 @@
 (defpackage #:rotator.config
-  (:use #:cl
-        #:cxml
-        #:xpath)
+  (:use #:cl #:cl-yaml)
   (:import-from :cl-fad
                 :file-exists-p
                 :directory-exists-p)
-  (:import-from :rutils :ensure-keyword)
   (:import-from :cl-log
                 :log-message)
-  (:import-from :rotator.utils
-                :xpath-attr-val)
-  (:import-from :xpath
-                :all-nodes
-                :evaluate
-                :map-node-set->list
-                :string-value)
-  (:export :config-dir-path
+  (:import-from :alexandria
+                :hash-table-keys)
+  (:import-from :cl-rules
+                :loads)
+  (:export :config-valid-p
+           :load-rules
            :rules-config-path
-           :rules-config-exists?
-           :config-root-element
-           :directories
-           :directory-path
-           :rules
-           :conditions
-           :condition-value
-           :condition-type
-           :rotators
-           :rotator-id
-           :rotator-params
-           :param-name
-           :param-value
-           :parse))
+           :rules-config-exists-p
+           :watch-directories))
 
 (in-package #:rotator.config)
 
@@ -43,130 +26,44 @@
                 ".rotator/")))
 
 (defun rules-config-path ()
-  "Возвращает путь до xml-конфига, где
+  "Возвращает путь до yml-конфига, где
    указаны параметры ротации"
-  (merge-pathnames (config-dir-path) #p"config.xml"))
+  (merge-pathnames (config-dir-path) #p"config.yml"))
 
-(defun rules-config-exists? ()
+(defun rules-config-exists-p ()
   "Проверка на существование файла-конфига"
   (if (file-exists-p (rules-config-path))
       t
       nil))
 
-(defun config-root-element (path)
-  "Возвращает корневой узел xml-конфига"
-  (dom:document-element
-   (cxml:parse-file path
-                    (cxml-dom:make-dom-builder))))
-
-(defun node-value (node)
-  "Возвращает текст xml-узла"
-  (string-value node))
-
-(defun directories (root-node)
-  "Возвращает список со всеми отслеживаемыми
-   директориями."
-  (all-nodes
-   (evaluate "./directory" root-node)))
-
-(defun directory-path (dir-node)
-  "Возвращает значение атрибута path у директории"
-  (xpath-attr-val "path" dir-node))
-
-(defun rules (dir-node)
-  "Возвращает список правил, активных для директории. Каждое
-   правило может содержать набор условий и ротаторов"
-  (all-nodes
-   (evaluate "./rule" dir-node)))
-
-(defun conditions (rule-node &optional (type nil))
-  "Извлекает все условия из узла-правила"
-  (let ((all-conditions (all-nodes
-                         (evaluate "./conditions/condition" rule-node))))
-    (if (null type)
-        all-conditions
-        (remove-if-not (lambda (x) (equal (xpath-attr-val "type" x)
-                                          type))
-                       all-conditions))))
-
-(defun condition-type (cond-node)
-  "Возвращает тип-идентификатор условия"
-  (xpath-attr-val "type" cond-node))
-
-(defun condition-value (cond-node)
-  "Значение лимита в условии"
-  (node-value cond-node))
-
-(defun rotators (rule-node &optional (id nil))
-  "Извлекает все ротаторы из узла-правила"
-  (let ((all-rotators (all-nodes
-                       (evaluate "./rotator" rule-node))))
-    (if (null id)
-        all-rotators
-        (remove-if-not (lambda (x) (equal (xpath-attr-val "id" x)
-                                          id))
-                       all-rotators))))
-
-(defun rotator-id (rotator-node)
-  "Собственно идентификтор ротатора"
-  (xpath-attr-val"id" rotator-node))
-
-(defun rotator-params (rotator-node)
-  "Возвращает все параметры, указанные
-   в ротаторе"
-  (all-nodes
-   (evaluate "./param" rotator-node)))
-
-(defun param-name (param-node)
-  ""
-  (xpath-attr-val "name" param-node))
-
-(defun param-value (param-node)
-  ""
-  (node-value param-node))
+(defun watch-directories ()
+  "Вернет хеш, ключами которого будут являться пути
+   директорий, подверженных ротации. Значения этого
+   хеша содержат список имен правил для ротации"
+  (gethash "directories" (parse (rules-config-path))))
 
 
-(defun dir-paths-exists? (root-node)
-  "Проверяет на существование все пути к просматриваемым
-   директориям в конфиге"
-  (every (lambda (x) (not (eql nil x)))
-         (map-node-set->list
-          (lambda (dir-node) (directory-exists-p (string-value dir-node)))
-          (evaluate "//directory/@path" root-node))))
+(defun load-rules ()
+  "Используя cl-rules подгружаем все правила
+   указанные в yml-конфиге"
+  (loads (rules-config-path)))
 
-(defun required-attr-exists? (root-node)
-  "Проверяет наличие обязательных атрибутов в xml-узлах конфига"
-  (and
-   (attr-exists? root-node "//directory" "path")
-   (attr-exists? root-node "//conditions/condition" "type")
-   (attr-exists? root-node "//rotator" "id")))
+(defun contain-watch-dirs-p (data)
+  "В конфиге присутствует раздел с описанием
+   директорий для ротации?"
+  (if (gethash "directories" data)
+      t
+      nil))
 
-(defun attr-exists? (root-node selector attr)
-  "Проверяет наличие указанного атрибута у выбранных
-   по селектору узлов"
-  (every (lambda (x) (eql nil x))
-         (map-node-set->list
-          (lambda (node) (node-set-empty-p
-                          (evaluate (concatenate 'string "@" attr) node)))
-          (evaluate selector root-node))))
+(defun all-watch-dirs-exists-p (data)
+  (every #'directory-exists-p
+         (hash-table-keys (gethash "directories" data))))
 
-(defun config-valid (root-node)
-  (reduce
-   (lambda (acc x)
-     (if (eql nil (first x))
-         (progn
-           (log-message :error (second x))
-           nil)
-         acc))
-   `((,(required-attr-exists? root-node) "Указаны не все обязательные атрибуты!")
-     (,(dir-paths-exists? root-node) "Не все указанные пути существуют!"))
-   :initial-value t))
-
-(defun parse ()
-  "Собственно парсинг xml-конфига. В каждом directory-узле
-   содержится ин-ия о методе его ротации."
-  (let ((root-node (config-root-element (rules-config-path))))
-    (if (and (rules-config-exists?)
-             (config-valid root-node))
-        root-node
-        nil)))
+(defun config-valid-p (data)
+  "Проверяет yml-конфиг на валидность. В DATA
+   должна быть передана структура, которую
+   возвращает yaml-парсер"
+  (every (lambda (x) (equalp t x))
+         (list
+          (contain-watch-dirs-p data)
+          (all-watch-dirs-exists-p data))))

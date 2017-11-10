@@ -16,12 +16,12 @@
   :version "0.1"
   :author "Ito Dimercel"
   :license "LLGPL"
-  :depends-on (:cxml
-               :xpath
-               :cl-ppcre
+  :depends-on (:cl-ppcre
                :cl-fad
+               :alexandria
                :rutils
                :local-time
+               :cl-yaml
                :cl-rules
                :cl-log)
   :components ((:module "src"
