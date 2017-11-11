@@ -6,6 +6,7 @@
   (:import-from :cl-log
                 :log-message)
   (:import-from :alexandria
+                :define-constant
                 :hash-table-keys)
   (:import-from :cl-rules
                 :loads)
@@ -16,6 +17,11 @@
            :watch-directories))
 
 (in-package #:rotator.config)
+
+
+(define-constant +watch-dir-key+ "directories" :test #'equalp
+  "Имя ключа в конфиге, который содержит информацию о
+   директориях подверженных ротации")
 
 
 (defun config-dir-path ()
@@ -40,7 +46,7 @@
   "Вернет хеш, ключами которого будут являться пути
    директорий, подверженных ротации. Значения этого
    хеша содержат список имен правил для ротации"
-  (gethash "directories" (parse (rules-config-path))))
+  (gethash +watch-dir-key+ (parse (rules-config-path))))
 
 
 (defun load-rules ()
@@ -51,13 +57,13 @@
 (defun contain-watch-dirs-p (data)
   "В конфиге присутствует раздел с описанием
    директорий для ротации?"
-  (if (gethash "directories" data)
+  (if (gethash +watch-dir-key+ data)
       t
       nil))
 
 (defun all-watch-dirs-exists-p (data)
   (every #'directory-exists-p
-         (hash-table-keys (gethash "directories" data))))
+         (hash-table-keys (gethash +watch-dir-key+ data))))
 
 (defun config-valid-p (data)
   "Проверяет yml-конфиг на валидность. В DATA
