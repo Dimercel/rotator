@@ -3,8 +3,6 @@
   (:import-from :cl-fad
                 :file-exists-p
                 :directory-exists-p)
-  (:import-from :cl-log
-                :log-message)
   (:import-from :alexandria
                 :define-constant
                 :hash-table-keys)
