@@ -1,22 +1,16 @@
 (defpackage :rotator.rotator
-  (:export :remover
-           :mover
-           :ident
-           :info
-           :params
-           :import-raw-params
-           :rotate)
   (:import-from :cl-log
                 :log-message)
   (:import-from :cl-fad
                 :file-exists-p)
   (:import-from :rutils
-                :print-hash-table
                 :sethash)
   (:import-from :local-time
                 :format-timestring
                 :+iso-8601-format+
                 :now)
+  (:import-from :cl-rules
+                :defaction)
   (:use :common-lisp))
 
 (in-package :rotator.rotator)
@@ -48,89 +42,42 @@
               (return)))))
     result))
 
-(defclass rotator ()
-  ((ident
-    :reader ident)
-   (params
-    :initarg :params
-    :accessor params
-    :initform nil)))
-
-(defgeneric rotate (rotator path)
-  (:documentation "Здесь происходит ротация файла,
-   указанного в path"))
-
-
-(defgeneric import-raw-params (rotator raw-params)
-  (:documentation "Импортирует значения параметров ротатора
-   из обычного хеша"))
-
-(defun log-label (rotator)
+(defun log-label (ident)
   "Возвращает 'подпись' ротатора для представления в
    лог-файле"
-  (format nil "[ROTATOR] (~a)" (ident rotator) ))
+  (format nil "[ROTATOR] (~a)" ident))
 
 
-(defclass remover (rotator)
-  ((remove-count
-    :reader remove-count
-    :initform (make-hash-table :test 'equal))))
-
-(defmethod initialize-instance :after ((self remover) &key)
-  (setf (slot-value self 'ident) :remover)
-  (setf (slot-value self 'params) (make-hash-table))
-  (sethash :max-one-shot
-           (slot-value self 'params) 100))
+(defvar *remove-count* (make-hash-table :test 'equalp)
+  "Хранит количество удаленных файлов в каждой директории.")
 
 
-(defmethod import-raw-params ((self remover) raw-params)
-  (setf (params self) (make-hash-table))
-  (when (gethash :max-one-shot raw-params)
-    (sethash :max-one-shot
-             (params self)
-             (parse-integer (gethash :max-one-shot raw-params) :junk-allowed t))))
-
-(defmethod rotate ((self remover) path)
-  (let ((max-one-shot (gethash :max-one-shot (params self)))
-        (dir-remove-count
-          (gethash (directory-namestring path) (remove-count self))))
+(defaction remover (path &optional (max-one-shot 100))
+  (let ((ident :remover)
+        (dir-remove-count (gethash (directory-namestring path) *remove-count*)))
     (when (null dir-remove-count) (setf dir-remove-count 0))
     (when (or (null max-one-shot) (< dir-remove-count max-one-shot))
       (delete-file (pathname path))
       (sethash (directory-namestring path)
-               (remove-count self)
+               *remove-count*
                (1+ dir-remove-count))
       (log-message :info
-                   (format nil "~a Файл ~s успешно удален" (log-label self) path)))))
+                   (format nil "~a Файл ~s успешно удален" (log-label ident) path)))))
 
 
-(defclass mover (rotator)
-  ())
-
-(defmethod initialize-instance :after ((self mover) &key)
-  (setf (slot-value self 'ident) :mover)
-  (setf (slot-value self 'params) (make-hash-table)))
-
-(defmethod import-raw-params ((self mover) raw-params)
-  (setf (params self) (make-hash-table))
-  (when (gethash :path raw-params)
-    (sethash :path
-             (params self)
-             (gethash :path raw-params))))
-
-(defmethod rotate ((self mover) path)
-  (let* ((move-path (gethash :path (params self)))
+(defaction mover (path move-path)
+  (let* ((ident :mover)
          (new-path (format nil "~a/~a" move-path (file-namestring path))))
     (handler-case
         (cond
           ((null move-path)
            (log-message :warning
                         (format nil "~a Не указан обязательный параметр path"
-                                (log-label self))))
+                                (log-label ident))))
           ((not (file-exists-p move-path))
            (log-message :warning
                         (format nil "~a Директория ~s не существует"
-                                (log-label self)
+                                (log-label ident)
                                 move-path)))
           (t (progn
                (if (file-exists-p new-path)
@@ -138,26 +85,17 @@
                (rename-file path new-path)
                (log-message :info
                             (format nil "~a Файл ~s перемещен в ~s"
-                                    (log-label self)
+                                    (log-label ident)
                                     path
                                     new-path)))))
       (sb-int:simple-file-error (e)
         (log-message :warning
                      (format nil "~a Не удалось переместить ~s в ~s"
-                             (log-label self)
+                             (log-label ident)
                              path
                              new-path))))))
 
 
-(defclass info (rotator)
-  ())
-
-(defmethod initialize-instance :after ((self info) &key)
-  (setf (slot-value self 'ident) :info))
-
-(defmethod import-raw-params ((self info) raw-params)
-  nil)
-
-(defmethod rotate ((self info) path)
-    (log-message :info
-                 (format nil "~a Файл ~s был подвергнут ротации" (log-label self) path)))
+(defaction info (path)
+  (log-message :info
+               (format nil "~a Файл ~s был подвергнут ротации" :info path)))
