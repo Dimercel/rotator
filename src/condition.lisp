@@ -153,5 +153,5 @@
   (or path t))
 
 ;; Условие всегда возвращает ложь
-(defcondition always-false (path)
+(defcond always-false (path)
   (and path nil))
