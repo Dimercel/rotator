@@ -10,7 +10,6 @@
   (:import-from :cl-rules
                 :defparam
                 :setparam
-                :param-val
                 :eval-rule)
   (:import-from :alexandria
                 :hash-table-keys)
@@ -64,7 +63,7 @@
   (with-gensyms (dir-item)
     `(if (cl-fad:directory-exists-p ,dir-path)
          (dolist (,dir-item (cl-fad:list-directory ,dir-path))
-           (if (,predicate ,dir-item)
+           (when (,predicate ,dir-item)
                (let ((,symbol ,dir-item))
                  ,@body))))))
 
@@ -75,7 +74,7 @@
   (let ((watch-dirs (watch-directories)))
     (dolist (dir-path (hash-table-keys watch-dirs))
       (with-item-in-dir file dir-path is-file-p
-        (setparam watch-path (namestring file))
+        (setparam 'watch-path (namestring file))
         (eval-rule (gethash dir-path watch-dirs))))))
 
 (defun main (argv)
