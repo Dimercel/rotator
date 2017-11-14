@@ -9,6 +9,6 @@
 
 (plan 1)
 
-(ok (rotator.condition:always-true "" 0))
+(ok t)
 
 (finalize)
