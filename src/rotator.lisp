@@ -1,4 +1,5 @@
 (defpackage :rotator.rotator
+  (:use :cl)
   (:import-from :cl-log
                 :log-message)
   (:import-from :cl-fad
@@ -6,12 +7,11 @@
   (:import-from :rutils
                 :sethash)
   (:import-from :local-time
-                :format-timestring
                 :+iso-8601-format+
+                :format-timestring
                 :now)
   (:import-from :cl-rules
-                :defaction)
-  (:use :common-lisp))
+                :defaction))
 
 (in-package :rotator.rotator)
 

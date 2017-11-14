@@ -1,25 +1,25 @@
 (defpackage :rotator
   (:export :main)
-  (:use :common-lisp
+  (:use :cl
         :cl-fad
         :cl-log
-        :rotator.rotator
-        :rotator.condition)
+        :rotator.condition
+        :rotator.rotator)
   (:import-from :rutils
-                :with-gensyms
-                :ensure-keyword)
+                :ensure-keyword
+                :with-gensyms)
   (:import-from :cl-rules
                 :defparam
-                :setparam
-                :eval-rule)
+                :eval-rule
+                :setparam)
   (:import-from :alexandria
                 :hash-table-keys)
   (:import-from :rotator.utils :pretty-universal-time)
   (:import-from :rotator.config
                 :config-dir-path
                 :load-rules
-                :rules-config-path
                 :rules-config-exists-p
+                :rules-config-path
                 :watch-directories))
 
 (in-package :rotator)

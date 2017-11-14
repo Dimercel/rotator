@@ -1,7 +1,7 @@
 (defpackage rotator.utils
-  (:use :common-lisp)
   (:export :pretty-universal-time
-           :re-begin-and-end-str))
+           :re-begin-and-end-str)
+  (:use :cl))
 
 (in-package :rotator.utils)
 

@@ -1,18 +1,18 @@
-(defpackage #:rotator.config
-  (:use #:cl #:cl-yaml)
-  (:import-from :cl-fad
-                :file-exists-p
-                :directory-exists-p)
-  (:import-from :alexandria
-                :define-constant
-                :hash-table-keys)
-  (:import-from :cl-rules
-                :loads)
+(defpackage :rotator.config
   (:export :config-valid-p
            :load-rules
            :rules-config-path
            :rules-config-exists-p
-           :watch-directories))
+           :watch-directories)
+  (:use :cl :cl-yaml)
+  (:import-from :cl-fad
+                :directory-exists-p
+                :file-exists-p)
+  (:import-from :alexandria
+                :define-constant
+                :hash-table-keys)
+  (:import-from :cl-rules
+                :loads))
 
 (in-package #:rotator.config)
 

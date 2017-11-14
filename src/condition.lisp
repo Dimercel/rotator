@@ -1,23 +1,23 @@
 (defpackage :rotator.condition
-  (:export :file-size-more
-           :file-size-less
+  (:export :file-age-greater
+           :file-age-less
            :file-name-match
            :file-name-not-match
-           :file-age-greater
-           :file-age-less)
-  (:use :common-lisp)
+           :file-size-more
+           :file-size-less)
+  (:use :cl)
   (:import-from :cl-rules
                 :defcond)
   (:import-from :cl-fad :file-exists-p)
   (:import-from :local-time
+                :now
                 :timestamp-
                 :timestamp<
-                :universal-to-timestamp
-                :now)
+                :universal-to-timestamp)
   (:import-from :cl-ppcre
                 :regex-replace-all
-                :scan-to-strings
-                :scan)
+                :scan
+                :scan-to-strings)
   (:import-from :rotator.utils
                 :re-begin-and-end-str))
 
