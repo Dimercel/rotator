@@ -1,4 +1,5 @@
 (defpackage :rotator
+  (:export :main)
   (:use :common-lisp
         :cl-fad
         :cl-log
