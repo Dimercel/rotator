@@ -1,4 +1,4 @@
-(defpackage rotator.utils
+(defpackage :rotator.utils
   (:export :pretty-universal-time
            :re-begin-and-end-str)
   (:use :cl))
