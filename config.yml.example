@@ -1,0 +1,16 @@
+rules:
+  torrent:
+    conditions:
+      - [file-name-match, "{{watch-path}}", "*.torrent"]
+      - [file-size-more, "{{watch-path}}", "1MB"]
+      - [file-age-greater, "{{watch-path}}", "1M 1D"]
+    actions:
+      - [remover, "{{watch-path}}"]
+  image:
+    conditions:
+      - [file-name-match, "{{watch-path}}", "*.jpg|*.jpeg|*.png"]
+      - [file-age-greater, "{{watch-path}}", "7D"]
+    actions:
+      - [mover, "{{watch-path}}", "home/user/images"]
+directories:
+  "/home/user": [torrent, image, video, rubbish]
