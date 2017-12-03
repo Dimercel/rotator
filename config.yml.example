@@ -13,4 +13,4 @@ rules:
     actions:
       - [mover, "{{watch-path}}", "home/user/images"]
 directories:
-  "/home/user": [torrent, image, video, rubbish]
+  "/home/user": [torrent, image]
